@@ -26,11 +26,11 @@ class Client(JSONRPCBaseClient):
         return _socket
 
     def _make_request(self, method, params):
-        request = self.construct_json_request(method, params)
+        request = self.construct_json_request(method, params).encode()
 
         for _ in range(3):
             self._socket.sendall(request)
-            response_raw = ""
+            response_raw = b""
 
             while True:
                 try:
@@ -38,7 +38,7 @@ class Client(JSONRPCBaseClient):
                 except socket.timeout:
                     break
 
-            if response_raw == "":
+            if response_raw == b"":
                 self._socket.close()
                 self._socket = self.get_socket()
                 continue
@@ -47,7 +47,7 @@ class Client(JSONRPCBaseClient):
         else:
             raise ValueError("No JSON returned by socket")
 
-        response = json.loads(response_raw)
+        response = json.loads(response_raw.decode())
 
         if "error" in response:
             raise ValueError(response["error"]["message"])
